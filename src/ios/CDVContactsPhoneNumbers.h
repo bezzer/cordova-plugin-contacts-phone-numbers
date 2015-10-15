@@ -24,7 +24,7 @@
 
 @interface CDVContactsPhoneNumbers : CDVPlugin
 {
-    ABAddressBookRef addressBook;
+    ABAddressBookRef addressBookNumbers;
 }
 
 /*
@@ -38,11 +38,11 @@
 
 @end
 
-typedef void (^ CDVAddressBookWorkerBlock)(
+typedef void (^ CDVNumbersAddressBookWorkerBlock)(
     ABAddressBookRef         addrBook
     );
-@interface CDVAddressBookHelper : NSObject
+@interface CDVNumbersAddressBookHelper : NSObject
 {}
 
-- (void)createAddressBook:(CDVAddressBookWorkerBlock)workerBlock;
+- (void)createAddressBook:(CDVNumbersAddressBookWorkerBlock)workerBlock;
 @end

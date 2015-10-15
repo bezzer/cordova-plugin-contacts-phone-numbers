@@ -30,7 +30,7 @@
 
     [self.commandDelegate runInBackground:^{
 
-        CDVAddressBookHelper* abHelper = [[CDVAddressBookHelper alloc] init];
+        CDVNumbersAddressBookHelper* abHelper = [[CDVNumbersAddressBookHelper alloc] init];
         CDVContactsPhoneNumbers* __weak weakSelf = self; 
 
         [abHelper createAddressBook: ^(ABAddressBookRef addrBook) {
@@ -55,7 +55,7 @@
                 int countEmails = ABMultiValueGetCount(emails);
                 
                 //we skip users with no phone numbers or emails
-                if (countPhones > 0 or countEmails > 0) {
+                if (countPhones > 0 || countEmails > 0) {
                     NSMutableArray* phoneNumbersArray = [[NSMutableArray alloc] init];
                     NSMutableArray* emailsArray = [[NSMutableArray alloc] init];
                     
@@ -89,6 +89,7 @@
                         // creating the nested element with the phone number details
                         NSMutableDictionary* phoneNumberDictionary = [NSMutableDictionary dictionaryWithCapacity:1];
                         [phoneNumberDictionary setObject: number forKey:@"number"];
+                        [phoneNumberDictionary setObject: number forKey:@"value"];
                         [phoneNumberDictionary setObject: number forKey:@"normalizedNumber"];
                         [phoneNumberDictionary setObject: phoneLabel forKey:@"type"];
                         // adding this phone number to the list of phone numbers for this user
@@ -99,9 +100,9 @@
                     }
                     
                     for (CFIndex h = 0; h < countEmails; h++) {
-                      CFStringRef emailRef = ABMultiValueCopyValueAtIndex(emails, j);
+                      CFStringRef emailRef = ABMultiValueCopyValueAtIndex(emails, h);
                       NSString *email = (__bridge_transfer NSString*) emailRef; 
-                      CFStringRef emailTypeLabelRef = ABMultiValueCopyLabelAtIndex(emails, j);
+                      CFStringRef emailTypeLabelRef = ABMultiValueCopyLabelAtIndex(emails, h);
                       
                       NSString *emailLabel = @"OTHER";
                       if (emailTypeLabelRef) {
@@ -114,7 +115,7 @@
                       
                       // Create a nested email element
                       NSMutableDictionary* emailDictionary = [NSMutableDictionary dictionaryWithCapacity:1];
-                      [emailDictionary setObject: email forKey:@"email"];
+                      [emailDictionary setObject: email forKey:@"value"];
                       [emailDictionary setObject: emailLabel forKey:@"type"];
                       // Add entry to emails list for this user
                       [emailsArray addObject:emailDictionary];
@@ -176,12 +177,12 @@
 
 
 
-@implementation CDVAddressBookHelper
+@implementation CDVNumbersAddressBookHelper
 
 /**
  * NOTE: workerBlock is responsible for releasing the addressBook that is passed to it
  */
-- (void)createAddressBook:(CDVAddressBookWorkerBlock)workerBlock
+- (void)createAddressBook:(CDVNumbersAddressBookWorkerBlock)workerBlock
 {
     ABAddressBookRef addrBook = ABAddressBookCreateWithOptions(NULL, nil);
     ABAddressBookRequestAccessWithCompletion(addrBook, ^(bool granted, CFErrorRef error) {

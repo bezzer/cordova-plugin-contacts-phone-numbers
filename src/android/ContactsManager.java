@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Contacts.Data;
@@ -66,6 +67,8 @@ public class ContactsManager extends CordovaPlugin {
             ContactsContract.CommonDataKinds.Phone.NUMBER,
             ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER,
             ContactsContract.CommonDataKinds.Phone.TYPE,
+            ContactsContract.CommonDataKinds.Email.ADDRESS,
+            ContactsContract.CommonDataKinds.Email.TYPE,
             ContactsContract.Data.CONTACT_ID,
             ContactsContract.Data.MIMETYPE
         };
@@ -98,6 +101,7 @@ public class ContactsManager extends CordovaPlugin {
 
         JSONObject contact = new JSONObject();
         JSONArray phones = new JSONArray();
+        JSONArray emails = new JSONArray();
 
         try {
             if (c.getCount() > 0) {
@@ -111,11 +115,13 @@ public class ContactsManager extends CordovaPlugin {
                     if (!oldContactId.equals(contactId)) {
                         // Populate the Contact object with it's arrays and push the contact into the contacts array
                         contact.put("phoneNumbers", phones);
+                        contact.put("emails", emails);
                         contacts.put(contact);
                         // Clean up the objects
                         contact = new JSONObject();
                         phones = new JSONArray();
-
+                        emails = new JSONArray();
+                        
                         // Set newContact to true as we are starting to populate a new contact
                         newContact = true;
                     }
@@ -135,6 +141,9 @@ public class ContactsManager extends CordovaPlugin {
                     }
                     else if (mimetype.equals(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)) {
                         phones.put(getPhoneNumber(c));
+                    } 
+                    else if (mimetype.equals(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)) {
+                        emails.put(getEmail(c));
                     }
 
                     // Set the old contact ID
@@ -142,6 +151,7 @@ public class ContactsManager extends CordovaPlugin {
                 } 
                 // Push the last contact into the contacts array
                 contact.put("phoneNumbers", phones);
+                contact.put("emails", emails);
                 contacts.put(contact);
             }
         } catch (JSONException e) {
@@ -161,9 +171,24 @@ public class ContactsManager extends CordovaPlugin {
         String number = cursor.getString(cursor.getColumnIndex(Phone.NUMBER));
         String normalizedNumber = cursor.getString(cursor.getColumnIndex(Phone.NORMALIZED_NUMBER));
         phoneNumber.put("number", number);
+        phoneNumber.put("value", number);
         phoneNumber.put("normalizedNumber", (normalizedNumber == null) ? number : normalizedNumber);
         phoneNumber.put("type", getPhoneTypeLabel(cursor.getInt(cursor.getColumnIndex(Phone.TYPE))));
         return phoneNumber;
+    }
+    
+    /**
+     * Return an email JSON Object with type and value
+     * @param cursor the current database row
+     * @return JSONObject representing an email
+     */
+    private JSONObject getEmail(Cursor cursor) throws JSONException {
+      JSONObject email = new JSONObject();
+      String emailAddress = cursor.getString(cursor.getColumnIndex(Email.ADDRESS));
+      String type = getEmailTypeLabel(cursor.getInt(cursor.getColumnIndex(Email.TYPE)));
+      email.put("value", emailAddress);
+      email.put("type", type);
+      return email;
     }
 
 
@@ -182,5 +207,17 @@ public class ContactsManager extends CordovaPlugin {
             label = "WORK";
         
         return label;
+    }
+    
+    private String getEmailTypeLabel(int type) {
+      String label = "OTHER";
+      if (type == Email.TYPE_HOME)
+          label = "HOME";
+      else if (type == Email.TYPE_MOBILE)
+          label = "MOBILE";
+      else if (type == Email.TYPE_WORK)
+          label = "WORK";
+      
+      return label;
     }
 }
